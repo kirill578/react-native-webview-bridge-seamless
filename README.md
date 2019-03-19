@@ -27,7 +27,7 @@ export const WebViewWithBridge = withWebViewBridge(WebView);
 
 # Usage
 
-```
+```js
 class MySmartWebView extends React.Component<> {
     constructor(props) {
         super(props);
@@ -55,7 +55,7 @@ class MySmartWebView extends React.Component<> {
 
 inside your web application we can interact with the defined app in the following way
 
-```
+```js
 const timeout = 5000; // promise will fail if no response in 5 seconds
 const tokenA = await this.getReactNativeApi(timeout).getToken('A');
 ```
