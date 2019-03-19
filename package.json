@@ -1,0 +1,25 @@
+{
+  "name": "react-native-webview-bridge-seamless",
+  "version": "0.0.7",
+  "description": "make it easy to invoke functions on webview and in react",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "rm -rf ./lib && tsc",
+    "prepare": "npm run-script build"
+  },
+  "keywords": [
+    "webview",
+    "bridge"
+  ],
+  "author": "Kirill Kulakov",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/react": "^16.8.8",
+    "@types/uuid": "^3.4.4",
+    "react": "^16.8.4",
+    "typescript": "^3.3.3333"
+  },
+  "dependencies": {
+    "uuid": "^3.3.2"
+  }
+}
