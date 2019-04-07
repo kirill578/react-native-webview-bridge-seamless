@@ -33,7 +33,7 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
         }
 
         public invokeFunctionInWebview(webviewObjectReference: string, input: any, timeout: number = 1000) {
-            return new Promise(async (resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 const invocationId = uuid.v4();
 
                 setTimeout(function () {
