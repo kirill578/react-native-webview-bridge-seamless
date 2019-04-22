@@ -57,5 +57,5 @@ inside your web application we can interact with the defined app in the followin
 
 ```js
 const timeout = 5000; // promise will fail if no response in 5 seconds
-const tokenA = await this.getReactNativeApi(timeout).getToken('A');
+const tokenA = await window.getReactNativeApi(timeout).getToken('A');
 ```
