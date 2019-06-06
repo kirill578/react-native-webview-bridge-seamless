@@ -101,7 +101,7 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
                 }
             }
 
-            if (obj.type && obj.type === 'reactNativeFunctionInvocation') {
+            if (obj && obj.type === 'reactNativeFunctionInvocation') {
                 const func = this.props.reactNativeApi[obj.name];
                 try {
                     const response = await func(obj.data);
