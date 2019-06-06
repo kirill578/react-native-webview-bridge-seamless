@@ -86,6 +86,10 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
         }
 
         /* private */ async _onWebViewMessage(event: any) {
+            if (this.props.onMessage) {
+                event.persist();
+            }
+            
             let obj;
             try {
                 obj = JSON.parse(event.nativeEvent.data);
