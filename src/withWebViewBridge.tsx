@@ -119,15 +119,18 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
                     true;
                 `);
                 } catch (e) {
-                    //language=JavaScript
-                    this.webview.injectJavaScript(`
-                    window.postMessage(${JSON.stringify({
-                        type: 'functionRejection',
-                        invocationId: obj.invocationId,
-                        data: e
-                    })}, window.location.href);
-                    true;
-                `);
+                    try {
+                        //language=JavaScript
+                        this.webview.injectJavaScript(`
+                        window.postMessage(${JSON.stringify({
+                            type: 'functionRejection',
+                            invocationId: obj.invocationId,
+                            data: e
+                        })}, window.location.href);
+                        true;
+                    `);
+                    } catch (_ignore) {
+                    }
                 }
             }
 
