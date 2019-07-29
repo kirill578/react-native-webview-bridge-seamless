@@ -1,6 +1,6 @@
 {
   "name": "react-native-webview-bridge-seamless",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "make it easy to invoke functions on webview and in react",
   "main": "lib/index.js",
   "scripts": {
