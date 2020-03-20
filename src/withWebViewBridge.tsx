@@ -160,7 +160,7 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
                                     }
                                 }, false);
                                 setTimeout(function () {
-                                    reject();
+                                    reject(new Error('Timeout'));
                                 }, timeout);
                                 // noinspection JSUnresolvedVariable
                                 window.ReactNativeWebView.postMessage(JSON.stringify({
