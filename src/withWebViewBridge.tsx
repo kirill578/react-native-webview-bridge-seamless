@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as uuid from 'uuid';
 
 export type WebViewWithBridgeProps = {
-    onError?: (e: unknown) => void;
+    onBridgeError?: (e: unknown) => void;
     reactNativeApi: {
         [key: string]: (arg: any) => any;
     }
@@ -136,8 +136,8 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
                             true;
                         `);
                     } catch (e) {
-                        if (this.props.onError) {
-                            (this.props.onError as any)(e);
+                        if (this.props.onBridgeError) {
+                            (this.props.onBridgeError as any)(e);
                         }
                     }
                 } catch (e) {
@@ -152,8 +152,8 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
                         true;
                     `);
                     } catch (e) {
-                        if (this.props.onError) {
-                            (this.props.onError as any)(e);
+                        if (this.props.onBridgeError) {
+                            (this.props.onBridgeError as any)(e);
                         }
                     }
                 }
