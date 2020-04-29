@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as uuid from 'uuid';
 
 export type WebViewWithBridgeProps = {
-    onError: (e: any) => void;
+    onError?: (e: unknown) => void;
     reactNativeApi: {
         [key: string]: (arg: any) => any;
     }
@@ -19,6 +19,7 @@ export type BaseWebViewPropsType = {
     onMessage?: (event: any) => any;
 }
 
+// source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#Examples
 const getCircularReplacer = () => {
     const seen = new WeakSet();
     return (key: string, value: unknown) => {
@@ -135,7 +136,9 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
                             true;
                         `);
                     } catch (e) {
-                        this.props.onError(e);
+                        if (this.props.onError) {
+                            (this.props.onError as any)(e);
+                        }
                     }
                 } catch (e) {
                     try {
@@ -149,7 +152,9 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
                         true;
                     `);
                     } catch (e) {
-                        this.props.onError(e);
+                        if (this.props.onError) {
+                            (this.props.onError as any)(e);
+                        }
                     }
                 }
             }
@@ -176,9 +181,13 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
                                                     if (data.type === 'functionResponse') {
                                                         resolve(data.data);
                                                     } else if (data.type === 'functionRejection') {
-                                                        reject(data.data);
+                                                        if (data.data !== undefined) {
+                                                            reject(data.data);
+                                                        } else {
+                                                            reject(new Error(\`bridge exception is undefined for function with name: \${name}\`));
+                                                        }
                                                     } else {
-                                                        reject(new Error('unexpected response: ' + data.type));
+                                                        reject(new Error(\`bridge unexpected type for function with name: \${name}\ unexpected type: \${data.type}\`));
                                                     }
                                                 } catch (e) {
                                                     reject(e);
