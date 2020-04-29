@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as uuid from 'uuid';
 
 export type WebViewWithBridgeProps = {
+    onBridgeError?: (e: unknown) => void;
     reactNativeApi: {
         [key: string]: (arg: any) => any;
     }
@@ -17,6 +18,20 @@ export type BaseWebViewPropsType = {
     onNavigationStateChange?: (event: any) => any;
     onMessage?: (event: any) => any;
 }
+
+// source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#Examples
+const getCircularReplacer = () => {
+    const seen = new WeakSet();
+    return (key: string, value: unknown) => {
+      if (typeof value === "object" && value !== null) {
+        if (seen.has(value)) {
+          return;
+        }
+        seen.add(value);
+      }
+      return value;
+    };
+};
 
 
 export const withWebViewBridge = function<WebViewType extends BaseWebViewType, WebViewPropsType extends BaseWebViewPropsType>(BaseWebView: WebViewType) {
@@ -109,15 +124,22 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
                 const func = this.props.reactNativeApi[obj.name];
                 try {
                     const response = await func(obj.data);
-                    //language=JavaScript
-                    this.webview.injectJavaScript(`
-                    window.postMessage(${JSON.stringify({
-                        type: 'functionResponse',
-                        invocationId: obj.invocationId,
-                        data: response
-                    })}, window.location.href);
-                    true;
-                `);
+
+                    try {
+                        //language=JavaScript
+                        this.webview.injectJavaScript(`
+                            window.postMessage(${JSON.stringify({
+                                type: 'functionResponse',
+                                invocationId: obj.invocationId,
+                                data: response
+                            }, getCircularReplacer())}, window.location.href);
+                            true;
+                        `);
+                    } catch (e) {
+                        if (this.props.onBridgeError) {
+                            (this.props.onBridgeError as any)(e);
+                        }
+                    }
                 } catch (e) {
                     try {
                         //language=JavaScript
@@ -126,10 +148,13 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
                             type: 'functionRejection',
                             invocationId: obj.invocationId,
                             data: e
-                        })}, window.location.href);
+                        }, getCircularReplacer())}, window.location.href);
                         true;
                     `);
-                    } catch (_ignore) {
+                    } catch (e) {
+                        if (this.props.onBridgeError) {
+                            (this.props.onBridgeError as any)(e);
+                        }
                     }
                 }
             }
@@ -142,36 +167,50 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
         /* private */ _onNavigationStateChange(event: any) {
             //language=JavaScript
             this.webview.injectJavaScript(`
-                window.getReactNativeApi = (timeout = 1000) => new Proxy({}, {
-                    get(_, name) {
-                        return (arg) =>
-                            new Promise(function (resolve, reject) {
-                                const invocationId = btoa(Math.random()).substring(0, 12);
-                                window.addEventListener('message', function _listener({data}) {
-                                    if (data.invocationId === invocationId) {
-                                        window.removeEventListener('message', _listener, false);
-                                        if (data.type === 'functionResponse') {
-                                            resolve(data.data);
-                                        } else if (data.type === 'functionRejection') {
-                                            reject(data.data);
-                                        } else {
-                                            reject(new Error('unexpected response: ' + data.type));
-                                        }
+                if(window.getReactNativeApi === undefined) {
+                    window.getReactNativeApi = (timeout = 1000) => new Proxy({}, {
+                        get(_, name) {
+                            return (arg) =>
+                                new Promise(function (resolve, reject) {
+                                    try {
+                                        const invocationId = btoa(Math.random()).substring(0, 12);
+                                        window.addEventListener('message', function _listener({data}) {
+                                            if (data.invocationId === invocationId) { // if there is no data it will be an uncaught exception
+                                                window.removeEventListener('message', _listener, false);
+                                                try {
+                                                    if (data.type === 'functionResponse') {
+                                                        resolve(data.data);
+                                                    } else if (data.type === 'functionRejection') {
+                                                        if (data.data !== undefined) {
+                                                            reject(data.data);
+                                                        } else {
+                                                            reject(new Error(\`bridge exception is undefined for function with name: \${name}\`));
+                                                        }
+                                                    } else {
+                                                        reject(new Error(\`bridge unexpected type for function with name: \${name}\ unexpected type: \${data.type}\`));
+                                                    }
+                                                } catch (e) {
+                                                    reject(e);
+                                                }
+                                            }
+                                        }, false);
+                                        setTimeout(function () {
+                                            reject(new Error(\`bridge timeout for function with name: \${name}\`));
+                                        }, timeout);
+                                        // noinspection JSUnresolvedVariable
+                                        window.ReactNativeWebView.postMessage(JSON.stringify({
+                                            type: 'reactNativeFunctionInvocation',
+                                            invocationId: invocationId,
+                                            name: name,
+                                            data: arg,
+                                        }));
+                                    } catch (e) {
+                                        reject(e);
                                     }
-                                }, false);
-                                setTimeout(function () {
-                                    reject(new Error('Timeout'));
-                                }, timeout);
-                                // noinspection JSUnresolvedVariable
-                                window.ReactNativeWebView.postMessage(JSON.stringify({
-                                    type: 'reactNativeFunctionInvocation',
-                                    invocationId: invocationId,
-                                    name: name,
-                                    data: arg,
-                                }));
-                            })
-                    }
-                });
+                                })
+                        }
+                    });
+                }
                 true; // required or it might sometimes fail
             `);
 
