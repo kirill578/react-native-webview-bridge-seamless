@@ -101,6 +101,7 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
         }
 
         /* private */ async _onWebViewMessage(event: any) {
+            const requestingWebview = this.webview;
             if (this.props.onMessage) {
                 event.persist();
             }
@@ -127,7 +128,7 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
 
                     try {
                         //language=JavaScript
-                        this.webview.injectJavaScript(`
+                        requestingWebview.injectJavaScript(`
                             window.postMessage(${JSON.stringify({
                                 type: 'functionResponse',
                                 invocationId: obj.invocationId,
@@ -143,7 +144,7 @@ export const withWebViewBridge = function<WebViewType extends BaseWebViewType, W
                 } catch (e) {
                     try {
                         //language=JavaScript
-                        this.webview.injectJavaScript(`
+                        requestingWebview.injectJavaScript(`
                         window.postMessage(${JSON.stringify({
                             type: 'functionRejection',
                             invocationId: obj.invocationId,
